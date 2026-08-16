@@ -41,6 +41,14 @@ def check_user(username, password):
         return True
     return False
 
+def get_all_users():
+    conn = sqlite3.connect("users.db")
+    c = conn.cursor()
+    c.execute("SELECT username FROM users")
+    users = c.fetchall()
+    conn.close()
+    return users
+
 # --- Initialize DB ---
 init_db()
 
@@ -52,9 +60,12 @@ if "logged_in" not in st.session_state:
 if "username" not in st.session_state:
     st.session_state.username = ""
 
+# --- Simple admin password (change this to something only you know) ---
+ADMIN_PASSWORD = "Shiva@2612"
+
 # --- Menu ---
 if not st.session_state.logged_in:
-    menu = st.radio("Choose an option", ["Login", "Sign Up"])
+    menu = st.radio("Choose an option", ["Login", "Sign Up", "Admin - View Users"])
 
     if menu == "Sign Up":
         st.subheader("Create New Account")
@@ -84,6 +95,23 @@ if not st.session_state.logged_in:
                     st.rerun()
                 else:
                     st.error("Invalid username or password")
+
+    elif menu == "Admin - View Users":
+        st.subheader("Admin Access")
+        admin_pass = st.text_input("Enter Admin Password", type="password")
+
+        if admin_pass:
+            if admin_pass == ADMIN_PASSWORD:
+                st.success("Access granted")
+                users = get_all_users()
+                if users:
+                    st.write(f"**Total registered users: {len(users)}**")
+                    for u in users:
+                        st.write(f"- {u[0]}")
+                else:
+                    st.info("No users registered yet.")
+            else:
+                st.error("Wrong admin password")
 
 else:
     st.success(f"Welcome, {st.session_state.username}! You are logged in.")
